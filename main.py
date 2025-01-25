@@ -1,6 +1,11 @@
 import pandas as pd
 from transformers import DistilBertTokenizer, DistilBertModel
 import torch
+from flask import Flask, request, jsonify
+from flask_cors import CORS # Cross origin req is essentially trying to access info/resources from another website -> Cross-Origin Resource Sharing
+
+app = Flask(__name__) #-> Creates instance of Flask app
+CORS(app)
 
 tokenizer = DistilBertTokenizer.from_pretrained('distilbert-base-uncased')
 model = DistilBertModel.from_pretrained('distilbert-base-uncased')
@@ -29,3 +34,10 @@ for _, row in results.iterrows():
     print(f"Ingredients: {row['ingredients']}")
     print(f"Recipe: {row['recipe']}")
     print(f"Similarity: {row['similarity']:.2f}\n")
+
+
+@app.route('/recommendation', methods=['POST'])
+def recommendation():
+    user_inputs = request.json.get('ingredients')
+    results = recommend_recipes(user_inputs,data)
+    return jsonify(results.to_dict(orient='records'))  #orient='records' makes each dict one row of the dataframe, key = column; value = row values
