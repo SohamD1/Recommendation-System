@@ -2,8 +2,8 @@
 
 *Because "random eggs + half an onion" should = dinner, not doom*  
 
-A **recipe hack generator** for broke students who want to:  
-😎 Look like kitchen pros  
+A **recipe hack generator** for students who want to:  
+😎 Look like masterchefs 
 🚫 Avoid another sad microwave meal  
 💸 Use up those weird fridge leftovers  
 
