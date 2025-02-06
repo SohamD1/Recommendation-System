@@ -3,27 +3,41 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Recipe Recommender</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-            background-color: #f0f0f0;
-        }
-        h1 {
-            color: #2c3e50;
-            text-align: center;
-        }
-        #app {
-            max-width: 800px;
-            margin: 0 auto;
-        }
-    </style>
+    <title>Recipe Recommendation</title>
 </head>
 <body>
-    <div id="app">
-        <h1>🍳 Recipe Recommendation System</h1>
-        <p>If you see this text, Flask is working</p>
-    </div>
+    <h1>Recipe Recommendation</h1>
+    <input id="ingredient1" type="text" placeholder="Ingredient 1">
+    <input id="ingredient2" type="text" placeholder="Ingredient 2">
+    <input id="ingredient3" type="text" placeholder="Ingredient 3">
+    <button onclick="getRecommendations()">Get Recommendations</button>
+    <ul id="recipes"></ul>
+
+    <script>
+        async function getRecommendations() {
+            const ingredient1 = document.getElementById("ingredient1").value;
+            const ingredient2 = document.getElementById("ingredient2").value;
+            const ingredient3 = document.getElementById("ingredient3").value;
+
+            const response = await fetch("http://127.0.0.1:5000/recommendation", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ ingredients: `${ingredient1}, ${ingredient2}, ${ingredient3}` })
+            });
+
+            if (response.ok) {
+                const recipes = await response.json();
+                const recipeList = document.getElementById("recipes");
+                recipeList.innerHTML = "";
+                recipes.forEach(recipe => {
+                    const li = document.createElement("li");
+                    li.textContent = recipe.recipe;
+                    recipeList.appendChild(li);
+                });
+            } else {
+                console.error("Error fetching recommendations");
+            }
+        }
+    </script>
 </body>
 </html>
