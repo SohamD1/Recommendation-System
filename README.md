@@ -24,7 +24,8 @@ This is the home page where you enter your ingredients.
 
 **Results Page:**  
 After mixing up the ingredients, you'll see the recipe recommendations here.  
-![Results Page Image](https://github.com/user-attachments/assets/4435130b-5d11-46da-a2f5-3691e2772baa)
+![Results Page Image](https://github.com/user-attachments/assets/f4f4c731-ecd2-46d8-b27a-43526c9cd7ff)
+
 
 ## Installation
 
