@@ -1,57 +1,76 @@
-import pandas as pd
-from transformers import DistilBertTokenizer, DistilBertModel
+import csv
+import ast
+import numpy as np
 import torch
 from flask import Flask, request, jsonify, render_template
-from flask_cors import CORS 
+from transformers import AutoTokenizer, AutoModel
 
-app = Flask(__name__)  
-
-
-tokenizer = DistilBertTokenizer.from_pretrained('distilbert-base-uncased')
-model = DistilBertModel.from_pretrained('distilbert-base-uncased')
-
+app = Flask(__name__)
+tokenizer = AutoTokenizer.from_pretrained("distilbert-base-uncased")
+model = AutoModel.from_pretrained("distilbert-base-uncased")
 
 def get_embedding(text):
-    """Compute the embedding of input text."""
-    inputs = tokenizer(text, return_tensors="pt", padding=True, truncation=True)
-    with torch.no_grad():
-        outputs = model(**inputs)
-    return outputs.last_hidden_state.mean(dim=1).squeeze(0)  
+    """
+    Generate a mean-pooled embedding for the input text using DistilBERT.
+    """
+    inputs = tokenizer(text, return_tensors="pt", truncation=True, padding=True)
+    outputs = model(**inputs)
+    embeddings = outputs.last_hidden_state 
+    attention_mask = inputs["attention_mask"]
+    mask = attention_mask.unsqueeze(-1).expand(embeddings.size()).float()
 
+    masked_embeddings = embeddings * mask
+    summed = torch.sum(masked_embeddings, dim=1)
+    counts = torch.clamp(mask.sum(dim=1), min=1e-9) 
+    mean_pooled = summed / counts
 
-data = pd.read_csv('recipes.csv')
+    return mean_pooled.detach().numpy()[0]
 
-data['embedding'] = data['ingredients'].apply(lambda x: get_embedding(str(x)).tolist())
+recipes = []
+csv_filename = "recipes.csv"  
 
+with open(csv_filename, newline="", encoding="utf-8") as csvfile:
+    reader = csv.DictReader(csvfile)
+    for row in reader:
+        try:
+            embedding = ast.literal_eval(row["embedding"])
+        except Exception as e:
+            print("Error parsing embedding:", row["embedding"], e)
+            continue
 
-def recommend_recipes(user_ingredients, data, top_n=3):
-    """Recommend recipes based on cosine similarity."""
-    user_embedding = get_embedding(user_ingredients) 
-    cos = torch.nn.CosineSimilarity(dim=0) 
+        recipes.append({
+            "ingredients": row["ingredients"],
+            "recipe": row["recipe"],
+            "embedding": np.array(embedding)
+        })
 
-
-    def calculate_similarity(embedding):
-
-        recipe_embedding = torch.tensor(embedding)
-        return cos(user_embedding, recipe_embedding).item()
-    
-    data['similarity'] = data['embedding'].apply(calculate_similarity)
-
-
-    recommendations = data.sort_values(by="similarity", ascending=False).head(top_n)
-    return recommendations[["ingredients", "recipe", "similarity"]]
-@app.route('/')
+def cosine_similarity(a, b):
+    return np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b))
+@app.route("/")
 def index():
-    return render_template('index.html')
+    return render_template("index.html")
 
-@app.route('/recommendation', methods=['POST'])
+
+@app.route("/recommendation", methods=["POST"])
 def recommendation():
-    user_inputs = request.json.get('ingredients')
-    if not user_inputs:
-        return jsonify({"error": "No ingredients provided"}), 400
-    
-    results = recommend_recipes(user_inputs, data)
-    return jsonify(results.to_dict(orient='records')) 
+    data = request.get_json()
+    if not data or "ingredients" not in data:
+        return jsonify({"error": "No ingredients provided."}), 400
+    ingredients_list = data["ingredients"]
+    query_text = ", ".join(ingredients_list)
+    query_embedding = get_embedding(query_text)
+    results = []
+    for recipe in recipes:
+        sim = cosine_similarity(query_embedding, recipe["embedding"])
+        results.append({
+            "recipe": recipe["recipe"],
+            "ingredients": recipe["ingredients"],
+            "similarity": sim
+        })
+    results = sorted(results, key=lambda x: x["similarity"], reverse=True)
+    top_results = results[:5]
 
-if __name__ == '__main__':
+    return jsonify(top_results)
+
+if __name__ == "__main__":
     app.run(debug=True)
