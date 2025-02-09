@@ -15,4 +15,4 @@ A **recipe hack generator** for students who want to:
 
 ## Next Steps
 1. 📄Upgrade the dataset to fit a variety of college student diets
-2. ✨Create a front end for the website to make it visually appealing
+
