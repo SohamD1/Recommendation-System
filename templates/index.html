@@ -3,40 +3,258 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Recipe Recommendation</title>
+    <title>Magic Recipe Generator ✨</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(45deg, #1a1a2e, #16213e);
+            padding: 20px;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            width: 100%;
+            max-width: 600px;
+            transform: translateY(0);
+            opacity: 1;
+            animation: slideUp 1s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(50px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        h1 {
+            color: #fff;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+            position: relative;
+        }
+
+        input {
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.9);
+            font-size: 1.1em;
+            transition: all 0.3s ease;
+            transform-origin: left;
+        }
+
+        input:focus {
+            outline: none;
+            background: rgba(255, 255, 255, 1);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            transform: scale(1.02);
+        }
+
+        button {
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            background: #e94560;
+            color: white;
+            font-size: 1.2em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        button:hover {
+            background: #ff6b6b;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(233, 69, 96, 0.4);
+        }
+
+        .result-section {
+            margin-top: 30px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 10px;
+            display: none;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .ingredient-bubble {
+            display: inline-block;
+            padding: 8px 15px;
+            margin: 5px;
+            background: #e94560;
+            color: white;
+            border-radius: 20px;
+            animation: popIn 0.3s ease-out;
+        }
+
+        @keyframes popIn {
+            0% { transform: scale(0); }
+            80% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 20px;
+            }
+            
+            h1 {
+                font-size: 2em;
+            }
+        }
+    </style>
+    <style>
+        .recipe-card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin: 15px 0;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            transform: translateY(0);
+            transition: transform 0.3s ease;
+        }
+
+        .recipe-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .recipe-title {
+            color: #e94560;
+            margin-bottom: 10px;
+            font-size: 1.4em;
+        }
+
+        .similarity-badge {
+            background: #45e9a3;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 10px;
+            font-size: 0.9em;
+            float: right;
+        }
+
+        .ingredients-list {
+            list-style-type: none;
+            margin-top: 10px;
+        }
+
+        .ingredient-item {
+            display: inline-block;
+            background: #f1f1f1;
+            padding: 5px 15px;
+            margin: 5px;
+            border-radius: 20px;
+            font-size: 0.9em;
+        }
+    </style>
 </head>
 <body>
-    <h1>Recipe Recommendation</h1>
-    <input id="ingredient1" type="text" placeholder="Ingredient 1">
-    <input id="ingredient2" type="text" placeholder="Ingredient 2">
-    <input id="ingredient3" type="text" placeholder="Ingredient 3">
-    <button onclick="getRecommendations()">Get Recommendations</button>
-    <ul id="recipes"></ul>
+    <div class="container">
+        <h1>What's in Your Kitchen? 🧑🍳</h1>
+        <form id="ingredientForm">
+            <div class="form-group">
+                <input type="text" id="ingredient1" placeholder="First ingredient 🥑" required>
+            </div>
+            <div class="form-group">
+                <input type="text" id="ingredient2" placeholder="Second ingredient 🍗" required>
+            </div>
+            <div class="form-group">
+                <input type="text" id="ingredient3" placeholder="Third ingredient 🧄" required>
+            </div>
+            <button type="submit">Mix It Up! 🪄</button>
+        </form>
+        <div class="result-section" id="resultSection"></div>
+    </div>
 
     <script>
-        async function getRecommendations() {
-            const ingredient1 = document.getElementById("ingredient1").value;
-            const ingredient2 = document.getElementById("ingredient2").value;
-            const ingredient3 = document.getElementById("ingredient3").value;
+        document.getElementById('ingredientForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const button = e.target.querySelector('button');
+            button.innerHTML = 'Cooking... 🔥';
+            button.disabled = true;
 
-            const response = await fetch("http://127.0.0.1:5000/recommendation", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ ingredients: `${ingredient1}, ${ingredient2}, ${ingredient3}` })
-            });
+            const ingredients = [
+                document.getElementById('ingredient1').value,
+                document.getElementById('ingredient2').value,
+                document.getElementById('ingredient3').value
+            ];
 
-            if (response.ok) {
-                const recipes = await response.json();
-                const recipeList = document.getElementById("recipes");
-                recipeList.innerHTML = "";
-                recipes.forEach(recipe => {
-                    const li = document.createElement("li");
-                    li.textContent = recipe.recipe;
-                    recipeList.appendChild(li);
+            try {
+                const response = await fetch('/recommendation', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ ingredients })
                 });
-            } else {
-                console.error("Error fetching recommendations");
+
+                if (!response.ok) throw new Error('Recipe magic failed!');
+                
+                const recipes = await response.json();
+                displayResults(recipes);
+            } catch (error) {
+                resultSection.innerHTML = `<div class="recipe-card">${error.message}</div>`;
+            } finally {
+                button.innerHTML = 'Mix It Up! 🪄';
+                button.disabled = false;
             }
+        });
+
+        function displayResults(recipes) {
+            const resultSection = document.getElementById('resultSection');
+            resultSection.innerHTML = '';
+            
+            recipes.forEach(recipe => {
+                const recipeCard = document.createElement('div');
+                recipeCard.className = 'recipe-card';
+                recipeCard.innerHTML = `
+                    <div class="similarity-badge">${Math.round(recipe.similarity * 100)}% Match</div>
+                    <h3 class="recipe-title">${recipe.recipe}</h3>
+                    <ul class="ingredients-list">
+                        ${recipe.ingredients.split(',').map(ing => 
+                            `<li class="ingredient-item">${ing.trim()}</li>`
+                        ).join('')}
+                    </ul>
+                `;
+                resultSection.appendChild(recipeCard);
+            });
+            
+            resultSection.style.display = 'block';
+            resultSection.style.animation = 'fadeIn 0.5s ease-out';
         }
     </script>
 </body>
