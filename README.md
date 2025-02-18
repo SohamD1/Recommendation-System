@@ -1,6 +1,6 @@
 # 🍳 FridgeSurvivalKit
 
-*Because "random eggs + half an onion" should = dinner, not doom*
+*Because "random eggs + half an onion" should = dinner, and not doom*
 
 FridgeSurvivalKit is a **recipe hack generator** built especially for students who want to:
 
